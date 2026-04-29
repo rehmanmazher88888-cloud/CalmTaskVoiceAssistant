@@ -606,4 +606,569 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(WarmBa
+            .background(WarmBackground)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (name.isBlank()) "Good morning" else "Good morning, $name",
+                    fontWeight = FontWeight.Bold,
+                    color = Charcoal,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text(
+                    text = "${activeTasks.size} active tasks · Mood: $mood",
+                    color = MutedGray
+                )
+            }
+
+            TextButton(onClick = goSettings) {
+                Text("Settings")
+            }
+        }
+
+        CardBox {
+            Text(
+                text = "Today's Focus",
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val focus = activeTasks.firstOrNull()?.value?.title ?: "No task yet"
+            Text(
+                text = focus,
+                color = Charcoal,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(onClick = onMorningGreeting) {
+                Text("Hear greeting")
+            }
+        }
+
+        CardBox {
+            Text(
+                text = "Add a task",
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = newTask,
+                onValueChange = { newTask = it },
+                label = { Text("Example: Call dentist") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    onAddTask(newTask)
+                    newTask = ""
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Add task")
+            }
+        }
+
+        CardBox {
+            Text(
+                text = "Simple voice command",
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+
+            Text(
+                text = "Try: done, skip, later, add buy milk",
+                color = MutedGray,
+                fontSize = 12.sp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = commandText,
+                onValueChange = { commandText = it },
+                label = { Text("Voice command") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    onVoiceCommand(commandText)
+                    commandText = ""
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Run command")
+            }
+        }
+
+        Text(
+            text = "Today",
+            fontWeight = FontWeight.Bold,
+            color = Charcoal
+        )
+
+        if (activeTasks.isEmpty()) {
+            Text("No active tasks. Add one small thing.", color = MutedGray)
+        } else {
+            activeTasks.forEach { item ->
+                TaskCard(
+                    task = item.value,
+                    onDone = { onDone(item.index) },
+                    onLater = { onLater(item.index) },
+                    onSkip = { onSkip(item.index) }
+                )
+            }
+        }
+
+        if (completedTasks.isNotEmpty()) {
+            Text(
+                text = "Completed",
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+
+            completedTasks.forEach { item ->
+                Text("✓ ${item.value.title}", color = CalmGreen)
+            }
+        }
+
+        Button(
+            onClick = goNight,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Night review")
+        }
+    }
+}
+
+@Composable
+fun NightScreen(
+    tasks: MutableList<TaskItem>,
+    onMoveAllActiveToTomorrow: () -> Unit,
+    onDeleteSkipped: () -> Unit,
+    onBack: () -> Unit
+) {
+    val completed = tasks.count { it.status == "completed" }
+    val active = tasks.count { it.status == "active" }
+    val skipped = tasks.count { it.status == "skipped" }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmBackground)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Night reset",
+            fontWeight = FontWeight.Bold,
+            color = Charcoal,
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Text(
+            text = "You completed $completed task(s). $active task(s) are still open.",
+            color = MutedGray
+        )
+
+        CardBox {
+            Text(
+                text = "Unfinished tasks",
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+
+            tasks.filter { it.status == "active" }.forEach {
+                Text("○ ${it.title}", color = Charcoal)
+            }
+
+            if (active == 0) {
+                Text("Nothing waiting. Good reset.", color = MutedGray)
+            }
+        }
+
+        Button(
+            onClick = onMoveAllActiveToTomorrow,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Keep unfinished tasks for tomorrow")
+        }
+
+        OutlinedButton(
+            onClick = onDeleteSkipped,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Delete skipped tasks ($skipped)")
+        }
+
+        TextButton(onClick = onBack) {
+            Text("Back")
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(
+    name: String,
+    country: String,
+    language: String,
+    gender: String,
+    mood: String,
+    voiceEnabled: Boolean,
+    profilePicture: String,
+    onNameChange: (String) -> Unit,
+    onCountryChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onGenderChange: (String) -> Unit,
+    onMoodChange: (String) -> Unit,
+    onVoiceEnabledChange: (Boolean) -> Unit,
+    onProfilePictureChange: (String) -> Unit,
+    onClearTasks: () -> Unit,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmBackground)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Settings",
+            fontWeight = FontWeight.Bold,
+            color = Charcoal,
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        ProfilePictureUpload(
+            picture = profilePicture,
+            onPictureChange = onProfilePictureChange
+        )
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        SimpleDropdown(
+            label = "Country",
+            selected = country,
+            options = listOf(
+                "United States",
+                "India",
+                "United Kingdom",
+                "Canada",
+                "Australia",
+                "Spain",
+                "France",
+                "Saudi Arabia",
+                "Germany",
+                "Brazil",
+                "Mexico",
+                "Japan",
+                "China",
+                "Other"
+            ),
+            onSelected = onCountryChange
+        )
+
+        SimpleDropdown(
+            label = "Language",
+            selected = language,
+            options = listOf(
+                "English",
+                "Hindi",
+                "Spanish",
+                "French",
+                "Arabic",
+                "Portuguese",
+                "German"
+            ),
+            onSelected = onLanguageChange
+        )
+
+        SimpleDropdown(
+            label = "Gender",
+            selected = gender,
+            options = listOf(
+                "Female",
+                "Male",
+                "Non-binary",
+                "Prefer not to say"
+            ),
+            onSelected = onGenderChange
+        )
+
+        Text(
+            text = "Mood selection",
+            fontWeight = FontWeight.Bold,
+            color = Charcoal
+        )
+
+        MoodButtons(
+            selectedMood = mood,
+            onMoodChange = onMoodChange
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Voice replies", color = Charcoal)
+            Switch(
+                checked = voiceEnabled,
+                onCheckedChange = onVoiceEnabledChange
+            )
+        }
+
+        Text(
+            text = "Privacy note: This app does not use always-on microphone listening.",
+            color = MutedGray,
+            fontSize = 12.sp
+        )
+
+        OutlinedButton(
+            onClick = onClearTasks,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Delete all tasks")
+        }
+
+        TextButton(onClick = onBack) {
+            Text("Back")
+        }
+    }
+}
+
+@Composable
+fun TaskCard(
+    task: TaskItem,
+    onDone: () -> Unit,
+    onLater: () -> Unit,
+    onSkip: () -> Unit
+) {
+    CardBox {
+        Text(
+            text = task.title,
+            fontWeight = FontWeight.Bold,
+            color = Charcoal
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row {
+            Button(onClick = onDone) {
+                Text("Done")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedButton(onClick = onLater) {
+                Text("Later")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedButton(onClick = onSkip) {
+                Text("Skip")
+            }
+        }
+    }
+}
+
+@Composable
+fun CardBox(content: @Composable Column.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            content = content
+        )
+    }
+}
+
+@Composable
+fun MoodButtons(
+    selectedMood: String,
+    onMoodChange: (String) -> Unit
+) {
+    val moods = listOf("Calm", "Energetic", "Tired", "Stressed", "Busy")
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        moods.chunked(2).forEach { rowItems ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                rowItems.forEach { mood ->
+                    if (selectedMood == mood) {
+                        Button(onClick = { onMoodChange(mood) }) {
+                            Text(mood)
+                        }
+                    } else {
+                        OutlinedButton(onClick = { onMoodChange(mood) }) {
+                            Text(mood)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SimpleDropdown(
+    label: String,
+    selected: String,
+    options: List<String>,
+    onSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("$label: $selected")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+fun greetingForMood(mood: String, activeTaskCount: Int): String {
+    return when (mood) {
+        "Tired" -> "Morning. Let's keep today light. You have $activeTaskCount active tasks."
+        "Stressed" -> "Morning. I'll keep this simple. Pick one thing."
+        "Busy" -> "Morning. Quick check-in. You have $activeTaskCount tasks."
+        "Energetic" -> "Morning. Want to start with the most important thing?"
+        else -> "Morning. Let's pick one thing for today. You have $activeTaskCount active tasks."
+    }
+}
+
+fun handleSimpleCommand(
+    command: String,
+    tasks: MutableList<TaskItem>,
+    save: () -> Unit,
+    say: (String) -> Unit
+) {
+    val lower = command.lowercase().trim()
+
+    if (lower.isBlank()) {
+        say("I missed that. Try a shorter version.")
+        return
+    }
+
+    when {
+        lower.startsWith("add ") -> {
+            val title = command.removePrefix("add").trim()
+            if (title.isNotBlank()) {
+                tasks.add(TaskItem(title))
+                save()
+                say("Added.")
+            } else {
+                say("What task should I add?")
+            }
+        }
+
+        lower.startsWith("remind me to ") -> {
+            val title = command.removePrefix("remind me to").trim()
+            if (title.isNotBlank()) {
+                tasks.add(TaskItem(title))
+                save()
+                say("Added.")
+            } else {
+                say("What should I remind you to do?")
+            }
+        }
+
+        lower.contains("done") || lower.contains("complete") || lower.contains("finished") -> {
+            val index = tasks.indexOfFirst { it.status == "active" }
+            if (index >= 0) {
+                tasks[index] = tasks[index].copy(status = "completed")
+                save()
+                say("Done. That's one less thing to carry.")
+            } else {
+                say("No active task to complete.")
+            }
+        }
+
+        lower.contains("skip") -> {
+            val index = tasks.indexOfFirst { it.status == "active" }
+            if (index >= 0) {
+                tasks[index] = tasks[index].copy(status = "skipped")
+                save()
+                say("Skipped.")
+            } else {
+                say("No active task to skip.")
+            }
+        }
+
+        lower.contains("later") -> {
+            save()
+            say("Okay. I'll keep it for later.")
+        }
+
+        lower.contains("tomorrow") -> {
+            save()
+            say("Saved for tomorrow.")
+        }
+
+        lower.contains("what") && lower.contains("next") -> {
+            val next = tasks.firstOrNull { it.status == "active" }
+            if (next != null) {
+                say("Next is ${next.title}.")
+            } else {
+                say("Nothing active right now.")
+            }
+        }
+
+        lower.contains("night") || lower.contains("plan tomorrow") -> {
+            say("Let's clear your list for tomorrow.")
+        }
+
+        else -> {
+            say("I'm not sure. You can say add, done, later, or skip.")
+        }
+    }
+}
