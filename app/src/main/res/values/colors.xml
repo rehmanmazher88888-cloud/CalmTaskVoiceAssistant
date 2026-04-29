@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#4F7DF3</color>
+    <color name="warm_background">#F8F5EF</color>
+    <color name="calm_green">#5CB85C</color>
+    <color name="warm_amber">#F5A623</color>
+    <color name="charcoal">#222222</color>
+    <color name="muted_gray">#777777</color>
+    <color name="card_white">#FFFFFF</color>
+</resources>
